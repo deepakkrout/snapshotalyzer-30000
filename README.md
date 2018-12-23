@@ -8,4 +8,4 @@ Shotty uses the configuration file created by AWS CLI
 
 # Running
 
-`pipenv run python "shotty/shotty.py"`
+`pipenv run python "shotty/shotty.py <subcommand> --project=<PROJECTNAME>" `
