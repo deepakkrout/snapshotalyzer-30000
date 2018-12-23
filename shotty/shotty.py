@@ -1,5 +1,6 @@
 import boto3
 import click
+import botocore
 
 
 
@@ -34,12 +35,15 @@ def snapshots():
 
 @snapshots.command('list')
 @click.option('--project',default=None,help="Only snapshots for Projects will be listed <tag Project : <Name>")
-def list_snapshots(project):
+@click.option('--all','list_all',default=False,is_flag=True,help="List all snapshots for all volumes not just the most recent")
+
+def list_snapshots(project,list_all):
     instances = filter_instances(project)
     for instance in instances :
         for volume in instance.volumes.all():
             for snapshot in volume.snapshots.all():
                 print(f"""{snapshot.id},{volume.id},{instance.id},{snapshot.state},{snapshot.progress},{snapshot.start_time.strftime("%c")}""")
+                if snapshot.state == 'completed' and not list_all : break
     return
 
 
@@ -100,13 +104,21 @@ def create_snapshots(project):
     instances = filter_instances(project)
     for instance in instances:
         print(f"Stopping {instance.id} ...")
-        instance.stop()
+        try :
+            instance.stop()
+        except botocore.exceptions.ClientError as e:
+            print(f"Could not stop {instance.id} {e}")
+            continue
         instance.wait_until_stopped()
         for volume in instance.volumes.all():
             print(f"""Creating snapshot for {volume.id}...""")
             volume.create_snapshot(Description="Created by SnapshotAlyzer 30000")
         print(f"Starting {instance.id} ...")
-        instance.start()
+        try :
+            instance.start()
+        except botocore.exceptions.ClientError as e:
+            print(f"Could not stop {instance.id} {e}")
+            continue
         instance.wait_until_running()
     print("Job done")
     return
