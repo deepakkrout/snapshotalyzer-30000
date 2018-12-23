@@ -41,7 +41,21 @@ def stop_instances(project) :
     for i in instances :
         print(f"Stopping {i.id}")
         i.stop()
+        return
 
+
+
+@instances.command('start')
+@click.option('--project',default=None,help="Only instances for Projects will be started <tag Project : <Name>")
+def start_instances(project) :
+    """Starting EC2 instances"""
+
+    instances = filter_instances(project)
+
+    for i in instances :
+        print(f"Starting {i.id}")
+        i.start()
+        return
 
 
 session = boto3.Session(profile_name ='boto3practice')
