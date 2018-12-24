@@ -13,6 +13,11 @@ def filter_instances(project) :
                 instances = list(ec2.instances.all())
         return instances
 
+def has_pending_snapshot(volume) :
+    snapshots = list(volume.snapshots.all())
+    return snapshots and snapshots[0].state== 'pending'
+
+
 @click.group('cli')
 def cli():
     """Shotty mangement CLI script"""
@@ -111,6 +116,9 @@ def create_snapshots(project):
             continue
         instance.wait_until_stopped()
         for volume in instance.volumes.all():
+            if(has_pending_snapshot(volume)):
+                print(f"Skipping {volume}.id")
+                continue
             print(f"""Creating snapshot for {volume.id}...""")
             volume.create_snapshot(Description="Created by SnapshotAlyzer 30000")
         print(f"Starting {instance.id} ...")
